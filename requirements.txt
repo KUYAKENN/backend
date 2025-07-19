@@ -1,20 +1,20 @@
 # Backend API Requirements for Railway Deployment
-# Face Recognition Attendance System
+# Face Recognition Attendance System - DeepFace/TensorFlow Based
 
 # Core Framework
 Flask==3.0.0
 flask-cors==4.0.0
 gunicorn==21.2.0
 
-# Computer Vision & Face Recognition (Railway compatible)
+# Computer Vision & Face Recognition (Pure Python - No compilation)
 opencv-python-headless==4.8.1.78
 numpy==1.24.4
 pillow==10.0.1
 
-# Alternative face recognition libraries (no compilation needed)
+# Face Recognition (TensorFlow-based - Railway compatible)
 deepface==0.0.87
 tensorflow==2.15.0
-mtcnn==0.1.1
+tf-keras==2.15.0
 
 # Database
 mysql-connector-python==8.2.0
@@ -29,6 +29,6 @@ openpyxl==3.1.2
 python-dotenv==1.0.0
 Werkzeug==3.0.1
 
-# Build tools
+# Build tools (minimal)
 setuptools>=65.0.0
 wheel>=0.37.0
