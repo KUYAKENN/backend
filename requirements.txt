@@ -1,17 +1,14 @@
 # Backend API Requirements for Railway Deployment
-# Face Recognition Attendance System - Simplified MediaPipe
+# Face Recognition Attendance System - Pure Python Solution
 
 # Core Framework
 Flask==3.0.0
 flask-cors==4.0.0
 gunicorn==21.2.0
 
-# Basic dependencies
+# Basic dependencies only
 numpy==1.24.4
 pillow==10.0.1
-
-# Face Recognition (MediaPipe only - no OpenCV)
-mediapipe==0.10.8
 
 # Database
 mysql-connector-python==8.3.0
@@ -20,6 +17,3 @@ SQLAlchemy==2.0.23
 # Environment & Security
 python-dotenv==1.0.0
 Werkzeug==3.0.1
-
-# Resolve protobuf conflict
-protobuf==3.20.3
