@@ -1,18 +1,18 @@
-# Backend API Requirements for Render.com Deployment
+# Backend API Requirements for Railway Deployment
 # Face Recognition Attendance System
 
 # Build Dependencies (Required first)
 setuptools>=65.0.0
 wheel>=0.37.0
-pip>=23.0.0
 
 # Core Framework
 Flask==3.0.0
 flask-cors==4.0.0
 gunicorn==21.2.0
 
-# Face Recognition & Computer Vision (Specific versions for stability)
-dlib==19.24.2
+# Face Recognition & Computer Vision (Railway optimized)
+cmake>=3.25.0
+dlib==19.24.1
 face-recognition==1.3.0
 opencv-python-headless==4.8.1.78
 numpy==1.24.4
@@ -23,13 +23,16 @@ mysql-connector-python==8.2.0
 SQLAlchemy==2.0.23
 Flask-SQLAlchemy==3.1.1
 
-# Data Processing
+# Data Processing  
 pandas==2.1.3
 openpyxl==3.1.2
 
 # Environment & Security
 python-dotenv==1.0.0
 Werkzeug==3.0.1
+
+# Railway specific
+psutil==5.9.6
 
 # Development (optional for local testing)
 # pytest==7.4.3

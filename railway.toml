@@ -1,0 +1,12 @@
+# Railway.toml - Railway Configuration
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "gunicorn server:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[environments.production.variables]
+FLASK_ENV = "production"
+PYTHONPATH = "/app"
