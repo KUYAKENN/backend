@@ -1,29 +1,33 @@
 # Backend API Requirements for Render.com Deployment
 # Face Recognition Attendance System
 
+# Build Dependencies (Required for Python 3.13)
+setuptools>=65.0.0
+wheel>=0.37.0
+
 # Core Framework
 Flask==3.0.0
 flask-cors==4.0.0
 gunicorn==21.2.0
 
-# Face Recognition & Computer Vision
+# Face Recognition & Computer Vision (Updated for Python 3.13 compatibility)
 face_recognition==1.3.0
-opencv-python-headless==4.9.0.80
-numpy==1.24.3
-pillow==10.1.0
+opencv-python-headless==4.10.0.84
+numpy>=1.24.0,<2.0.0
+pillow>=10.0.0
 
 # Database
-mysql-connector-python==9.3.0
-SQLAlchemy==2.0.41
-Flask-SQLAlchemy==3.1.1
+mysql-connector-python==9.1.0
+SQLAlchemy>=2.0.0,<3.0.0
+Flask-SQLAlchemy>=3.0.0
 
 # Data Processing
-pandas==2.1.4
-openpyxl==3.1.2
+pandas>=2.0.0,<3.0.0
+openpyxl>=3.1.0
 
 # Environment & Security
-python-dotenv==1.0.0
-Werkzeug==3.0.1
+python-dotenv>=1.0.0
+Werkzeug>=3.0.0
 
 # Development (optional for local testing)
 # pytest==7.4.3
