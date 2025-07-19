@@ -5,7 +5,7 @@ Migration utility to handle transition from face_recognition to DeepFace
 import json
 import numpy as np
 from database import DatabaseManager, FaceEncoding
-import deepface_recognition as face_recognition
+import mediapipe_recognition as face_recognition
 from image_utils import ImageHandler
 import cv2
 

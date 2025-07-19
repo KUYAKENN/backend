@@ -9,7 +9,7 @@ load_dotenv()
 from flask import Flask, request, jsonify, send_file, Response
 from flask_cors import CORS
 # Replace face_recognition with DeepFace module
-import deepface_recognition as face_recognition
+import mediapipe_recognition as face_recognition
 import cv2
 import numpy as np
 import pandas as pd
