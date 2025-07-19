@@ -1,15 +1,15 @@
 """
 MediaPipe Face Recognition Module
 Pure Python implementation compatible with Railway deployment
-No compilation dependencies (dlib/cmake free)
+No compilation dependencies (dlib/cmake/opencv free)
+Uses Pillow instead of OpenCV for image processing
 """
 
-import cv2
 import numpy as np
 import mediapipe as mp
+from PIL import Image
 import base64
 import io
-from PIL import Image
 import json
 import logging
 
@@ -17,13 +17,12 @@ import logging
 logging.getLogger('mediapipe').setLevel(logging.WARNING)
 
 class MediaPipeFaceRecognizer:
-    """MediaPipe-based face recognition system"""
+    """MediaPipe-based face recognition system (OpenCV-free)"""
     
     def __init__(self):
         """Initialize MediaPipe face detection and recognition"""
         self.mp_face_detection = mp.solutions.face_detection
         self.mp_face_mesh = mp.solutions.face_mesh
-        self.mp_drawing = mp.solutions.drawing_utils
         
         # Initialize face detection
         self.face_detection = self.mp_face_detection.FaceDetection(
@@ -38,27 +37,30 @@ class MediaPipeFaceRecognizer:
             min_detection_confidence=0.5
         )
         
-        print("✅ MediaPipe face recognition initialized")
+        print("✅ MediaPipe face recognition initialized (OpenCV-free)")
+    
+    def _rgb_to_bgr(self, image):
+        """Convert RGB image to BGR format for MediaPipe"""
+        if isinstance(image, Image.Image):
+            image = np.array(image)
+        
+        if len(image.shape) == 3 and image.shape[2] == 3:
+            return image[:, :, ::-1]  # RGB to BGR by reversing last dimension
+        return image
     
     def face_locations(self, image, model="hog"):
         """
         Find face locations in an image using MediaPipe
         
         Args:
-            image: RGB image array
+            image: RGB image array or PIL Image
             model: Detection model (kept for compatibility)
             
         Returns:
             List of face locations [(top, right, bottom, left), ...]
         """
         try:
-            # Convert RGB to BGR for MediaPipe
-            if len(image.shape) == 3 and image.shape[2] == 3:
-                bgr_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            else:
-                bgr_image = image
-            
-            # Detect faces
+            bgr_image = self._rgb_to_bgr(image)
             results = self.face_detection.process(bgr_image)
             
             locations = []
@@ -88,21 +90,16 @@ class MediaPipeFaceRecognizer:
         Get face encodings using MediaPipe face mesh landmarks
         
         Args:
-            image: RGB image array
+            image: RGB image array or PIL Image
             known_face_locations: Optional face locations
             num_jitters: Number of times to re-sample (kept for compatibility)
             model: Model size (kept for compatibility)
             
         Returns:
-            List of face encodings (468-dimensional landmark vectors)
+            List of face encodings (204-dimensional landmark vectors)
         """
         try:
-            # Convert RGB to BGR for MediaPipe
-            if len(image.shape) == 3 and image.shape[2] == 3:
-                bgr_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            else:
-                bgr_image = image
-            
+            bgr_image = self._rgb_to_bgr(image)
             encodings = []
             
             if known_face_locations:
@@ -119,12 +116,11 @@ class MediaPipeFaceRecognizer:
                         
                         if results.multi_face_landmarks:
                             landmarks = results.multi_face_landmarks[0]
-                            # Convert landmarks to encoding vector
                             encoding = self._landmarks_to_encoding(landmarks, face_region.shape)
                             encodings.append(encoding)
                         else:
                             # Add zero encoding as placeholder
-                            encodings.append(np.zeros(204))  # 68 landmarks × 3 coordinates
+                            encodings.append(np.zeros(204))
             else:
                 # Get all face encodings in the image
                 results = self.face_mesh.process(bgr_image)
@@ -146,17 +142,6 @@ class MediaPipeFaceRecognizer:
             h, w = image_shape[:2]
             
             # Extract key landmark coordinates and create encoding
-            key_landmarks = [
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,  # Face outline
-                17, 18, 19, 20, 21,  # Right eyebrow
-                22, 23, 24, 25, 26,  # Left eyebrow
-                27, 28, 29, 30, 31, 32, 33, 34, 35,  # Nose
-                36, 37, 38, 39, 40, 41,  # Right eye
-                42, 43, 44, 45, 46, 47,  # Left eye
-                48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67  # Mouth
-            ]
-            
-            # Extract coordinates for key landmarks
             coords = []
             landmark_list = list(landmarks.landmark)
             
@@ -252,67 +237,6 @@ class MediaPipeFaceRecognizer:
         except Exception as e:
             print(f"Error calculating face distances: {e}")
             return np.array([float('inf')] * len(known_face_encodings))
-    
-    def face_landmarks(self, image, face_locations=None, model="large"):
-        """
-        Get face landmarks using MediaPipe
-        
-        Args:
-            image: RGB image array
-            face_locations: Optional face locations
-            model: Model size (kept for compatibility)
-            
-        Returns:
-            List of landmark dictionaries
-        """
-        try:
-            # Convert RGB to BGR for MediaPipe
-            if len(image.shape) == 3 and image.shape[2] == 3:
-                bgr_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            else:
-                bgr_image = image
-            
-            landmarks_list = []
-            
-            # Get face mesh results
-            results = self.face_mesh.process(bgr_image)
-            
-            if results.multi_face_landmarks:
-                h, w = bgr_image.shape[:2]
-                
-                for landmarks in results.multi_face_landmarks:
-                    # Convert to face_recognition format
-                    landmark_dict = {
-                        'chin': [],
-                        'left_eyebrow': [],
-                        'right_eyebrow': [],
-                        'nose_bridge': [],
-                        'nose_tip': [],
-                        'left_eye': [],
-                        'right_eye': [],
-                        'top_lip': [],
-                        'bottom_lip': []
-                    }
-                    
-                    # MediaPipe has 468 landmarks, map key ones to face_recognition format
-                    for i, landmark in enumerate(landmarks.landmark):
-                        x = int(landmark.x * w)
-                        y = int(landmark.y * h)
-                        
-                        # Simplified mapping (MediaPipe uses different landmark indices)
-                        if i < 17:  # Approximate chin area
-                            landmark_dict['chin'].append((x, y))
-                        elif i < 27:  # Approximate eyebrow area
-                            landmark_dict['left_eyebrow'].append((x, y))
-                        # Add more mappings as needed...
-                    
-                    landmarks_list.append(landmark_dict)
-            
-            return landmarks_list
-            
-        except Exception as e:
-            print(f"Error getting face landmarks: {e}")
-            return []
 
 # Create global instance (replaces face_recognition module)
 _recognizer = MediaPipeFaceRecognizer()
@@ -334,23 +258,14 @@ def face_distance(known_face_encodings, face_encoding_to_check):
     """Calculate distance between face encodings"""
     return _recognizer.face_distance(known_face_encodings, face_encoding_to_check)
 
-def face_landmarks(image, face_locations=None, model="large"):
-    """Get face landmarks"""
-    return _recognizer.face_landmarks(image, face_locations, model)
-
 # Additional utility functions
 def load_image_file(file_path):
     """Load an image file into a numpy array"""
     try:
-        image = cv2.imread(file_path)
-        return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = Image.open(file_path)
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        return np.array(image)
     except Exception as e:
         print(f"Error loading image {file_path}: {e}")
         return None
-
-def batch_face_locations(images, number_of_times_to_upsample=1, batch_size=128):
-    """Process multiple images (kept for compatibility)"""
-    results = []
-    for image in images:
-        results.append(face_locations(image, number_of_times_to_upsample))
-    return results
