@@ -20,27 +20,33 @@ backend/
 
 ## 🚀 Render.com Deployment Steps
 
-### Step 1: Create MySQL Database
+### Step 1: Set Up MySQL Database
 
-Choose one of these MySQL providers:
+#### Option A: Use Your Existing MySQL Database (Recommended)
+If you already have a MySQL database running locally or on your server:
+1. Create a new database: `face_recognition_db`
+2. Run your `face_recognition_schema.sql` to create the required tables
+3. Make sure your MySQL server is accessible from the internet (configure firewall/port forwarding if needed)
+4. Note down your connection details:
+   - Host (your server IP or domain)
+   - Port (usually 3306)
+   - Username and password
+   - Database name
 
-#### Option A: PlanetScale (Recommended)
+#### Option B: Use Cloud MySQL Providers (If you need a cloud database)
+
+**PlanetScale**
 1. Go to [planetscale.com](https://planetscale.com)
-2. Create free account
-3. Create database: `face-recognition-db`
-4. Get connection string
-5. Run your `face_recognition_schema.sql`
+2. Create free account and database
+3. Run your `face_recognition_schema.sql`
 
-#### Option B: Railway
+**Railway**
 1. Go to [railway.app](https://railway.app)
-2. Create new project
-3. Add MySQL service
-4. Get connection details
+2. Create new project and add MySQL service
 
-#### Option C: Aiven
+**Aiven**
 1. Go to [aiven.io](https://aiven.io)
 2. Create MySQL service
-3. Get connection details
 
 ### Step 2: Deploy to Render.com
 

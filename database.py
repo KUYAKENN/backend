@@ -5,7 +5,7 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta
 import numpy as np
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Time, Float, Boolean, ForeignKey, create_engine, TIMESTAMP, DECIMAL, Enum, JSON
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Time, Float, Boolean, ForeignKey, create_engine, TIMESTAMP, DECIMAL, Enum, JSON, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from flask_sqlalchemy import SQLAlchemy
@@ -36,7 +36,16 @@ class FaceEncoding(Base):
     encoding_type = Column(Enum('standard', 'enhanced', 'multi_angle'), default='standard')
     face_angle = Column(Enum('front', 'left', 'right', 'up', 'down'), default='front')
     confidence_score = Column(DECIMAL(3, 2), default=1.0)
+    
+    # Image storage columns
+    image_data = Column(LargeBinary)  # Store actual image as binary data
+    image_filename = Column(String(255))  # Original filename
+    image_mime_type = Column(String(100), default='image/jpeg')  # MIME type
+    image_size = Column(Integer)  # File size in bytes
+    
+    # Keep old column for backward compatibility (can be removed later)
     image_path = Column(String(500))
+    
     created_date = Column(TIMESTAMP, default=datetime.now)
     is_primary = Column(Boolean, default=False)
     
@@ -54,7 +63,15 @@ class Attendance(Base):
     date_recorded = Column(Date, default=datetime.now().date)
     confidence_score = Column(DECIMAL(3, 2), default=1.0)
     detection_method = Column(Enum('auto', 'manual', 'override'), default='auto')
+    
+    # Detection image storage columns
+    detection_image_data = Column(LargeBinary)  # Store detection image as binary data
+    detection_image_filename = Column(String(255))  # Original filename
+    detection_image_mime_type = Column(String(100), default='image/jpeg')  # MIME type
+    
+    # Keep old column for backward compatibility (can be removed later)
     image_path = Column(String(500))
+    
     location_id = Column(Integer, ForeignKey('locations.id'))
     status = Column(Enum('present', 'late', 'early_leave', 'absent'), default='present')
     notes = Column(Text)
@@ -83,7 +100,15 @@ class RecognitionLog(Base):
     recognition_time = Column(TIMESTAMP, default=datetime.now)
     confidence_score = Column(DECIMAL(3, 2), nullable=False)
     detection_status = Column(Enum('recognized', 'unknown', 'low_confidence', 'failed'), nullable=False)
+    
+    # Recognition image storage columns
+    recognition_image_data = Column(LargeBinary)  # Store recognition image as binary data
+    recognition_image_filename = Column(String(255))  # Original filename
+    recognition_image_mime_type = Column(String(100), default='image/jpeg')  # MIME type
+    
+    # Keep old column for backward compatibility (can be removed later)
     image_path = Column(String(500))
+    
     location_id = Column(Integer, ForeignKey('locations.id'))
     
     # Relationships

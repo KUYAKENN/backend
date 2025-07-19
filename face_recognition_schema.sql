@@ -38,7 +38,13 @@ CREATE TABLE IF NOT EXISTS face_encodings (
     encoding_type ENUM('standard', 'enhanced', 'multi_angle') DEFAULT 'standard',
     face_angle ENUM('front', 'left', 'right', 'up', 'down') DEFAULT 'front',
     confidence_score DECIMAL(3,2) DEFAULT 0.80,
-    image_path VARCHAR(500),
+    
+    -- Store actual image data instead of file paths
+    image_data LONGBLOB,  -- Store the actual image file as binary data
+    image_filename VARCHAR(255),  -- Original filename for reference
+    image_mime_type VARCHAR(100) DEFAULT 'image/jpeg',  -- MIME type (image/jpeg, image/png, etc.)
+    image_size INT,  -- File size in bytes
+    
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_primary BOOLEAN DEFAULT FALSE,
     
@@ -64,7 +70,12 @@ CREATE TABLE IF NOT EXISTS attendance (
     date_recorded DATE NOT NULL,
     confidence_score DECIMAL(3,2) NOT NULL,
     detection_method ENUM('auto', 'manual', 'override') DEFAULT 'auto',
-    image_path VARCHAR(500),
+    
+    -- Store detection image data instead of file paths
+    detection_image_data LONGBLOB,  -- Store the detection image as binary data
+    detection_image_filename VARCHAR(255),  -- Original filename for reference
+    detection_image_mime_type VARCHAR(100) DEFAULT 'image/jpeg',
+    
     location_id INT,
     status ENUM('present', 'late', 'early_leave', 'absent') DEFAULT 'present',
     notes TEXT,
