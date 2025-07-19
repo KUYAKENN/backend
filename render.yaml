@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: face-recognition-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload
+    plan: free
+    region: oregon
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FLASK_ENV
+        value: production
+      - key: DB_HOST
+        value: your-mysql-host  # Update with your MySQL host
+      - key: DB_PORT
+        value: 3306
+      - key: DB_USER
+        value: your-mysql-user  # Update with your MySQL user
+      - key: DB_PASSWORD
+        value: your-mysql-password  # Update with your MySQL password
+      - key: DB_NAME
+        value: face_recognition_db
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"  # Update with your frontend URL after deployment
+      - key: FALLBACK_TO_FILES
+        value: true
+    healthCheckPath: /health
+    
+# Database Options for MySQL:
+# 1. PlanetScale (recommended): planetscale.com
+# 2. Railway: railway.app
+# 3. Aiven: aiven.io
+# 4. JawsDB: jawsdb.com
+  # - PlanetScale (free tier available)
+  # - Railway MySQL
+  # - AWS RDS (paid)
+  # - DigitalOcean Managed Database (paid)
