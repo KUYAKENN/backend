@@ -1,10 +1,13 @@
 """
 Image utilities for storing and retrieving images from MySQL database
+Updated for DeepFace compatibility
 """
 import base64
 import io
 from PIL import Image
 import mimetypes
+import cv2
+import numpy as np
 
 class ImageHandler:
     """Handles image storage and retrieval for MySQL BLOB fields"""

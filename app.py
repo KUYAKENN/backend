@@ -8,7 +8,8 @@ load_dotenv()
 # ENHANCED MULTI-ANGLE FACE REGISTRATION BACKEND
 from flask import Flask, request, jsonify, send_file, Response
 from flask_cors import CORS
-import face_recognition
+# Replace face_recognition with DeepFace module
+import deepface_recognition as face_recognition
 import cv2
 import numpy as np
 import pandas as pd

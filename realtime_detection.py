@@ -6,7 +6,8 @@ from queue import Queue
 from flask import Flask, Response, request
 from flask_cors import CORS
 import cv2
-import face_recognition
+# Replace face_recognition with DeepFace module
+import deepface_recognition as face_recognition
 import numpy as np
 from datetime import datetime
 
