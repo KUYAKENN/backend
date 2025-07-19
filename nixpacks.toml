@@ -1,4 +1,4 @@
-# nixpacks.toml - System dependencies for Railway (DeepFace/TensorFlow only)
+# nixpacks.toml - System dependencies for Railway (MediaPipe only)
 [phases.setup]
 nixPkgs = [
   "pkg-config"
@@ -11,4 +11,4 @@ cmds = [
 ]
 
 [start]
-cmd = "gunicorn server:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload --log-level info"
+cmd = "gunicorn server:app --bind 0.0.0.0:${PORT:-5000} --workers 1 --timeout 120 --preload --log-level info"
