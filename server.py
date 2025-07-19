@@ -9,10 +9,10 @@ import threading
 import time
 
 # Import your main Flask app
-from app import app as main_app, attendance_system
+from app_minimal import app as main_app
 
-# Import your real-time detection system
-from realtime_detection import detection_system, create_sse_app
+# Import your real-time detection system (disabled for deployment)
+# from realtime_detection import detection_system, create_sse_app
 
 # Environment configuration
 ENV = os.getenv('FLASK_ENV', 'development')

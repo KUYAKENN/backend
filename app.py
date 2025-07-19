@@ -8,15 +8,16 @@ load_dotenv()
 # ENHANCED MULTI-ANGLE FACE REGISTRATION BACKEND
 from flask import Flask, request, jsonify, send_file, Response
 from flask_cors import CORS
-# Replace face_recognition with DeepFace module
+# Replace face_recognition with pure Python module
 import mediapipe_recognition as face_recognition
-import cv2
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 import json
 import base64
 from io import BytesIO
+from PIL import Image
+import io
 import threading
 import time
 import gc
