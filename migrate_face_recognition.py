@@ -4,7 +4,7 @@ Migration utility to handle transition from face_recognition to DeepFace
 
 import json
 import numpy as np
-from database import DatabaseManager
+from database import DatabaseManager, FaceEncoding
 import deepface_recognition as face_recognition
 from image_utils import ImageHandler
 import cv2
@@ -24,72 +24,77 @@ class FaceRecognitionMigrator:
         try:
             print("🔄 Starting face encoding migration...")
             
-            # Get all existing face encodings with image data
-            query = """
-                SELECT id, person_id, encoding_data, image_data, image_filename 
-                FROM face_encodings 
-                WHERE image_data IS NOT NULL
-            """
+            if not self.db.is_connected():
+                print("❌ Database connection not available")
+                return False
             
-            results = self.db.execute_query(query)
+            session = self.db.get_session()
+            if not session:
+                print("❌ Could not create database session")
+                return False
             
-            if not results:
-                print("ℹ️ No existing encodings with image data found")
-                return True
-            
-            updated_count = 0
-            
-            for record in results:
-                encoding_id, person_id, old_encoding_data, image_data, filename = record
+            try:
+                # Get all existing face encodings with image data
+                encodings = session.query(FaceEncoding).filter(
+                    FaceEncoding.image_data.isnot(None)
+                ).all()
                 
-                try:
-                    # Convert image data to numpy array
-                    nparr = np.frombuffer(image_data, np.uint8)
-                    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-                    
-                    if image is None:
-                        print(f"⚠️ Could not decode image for encoding ID {encoding_id}")
+                if not encodings:
+                    print("ℹ️ No existing encodings with image data found")
+                    return True
+                
+                updated_count = 0
+                
+                for encoding_record in encodings:
+                    try:
+                        print(f"🔄 Processing encoding ID {encoding_record.id} for person_id {encoding_record.person_id}")
+                        
+                        # Convert image data to numpy array
+                        nparr = np.frombuffer(encoding_record.image_data, np.uint8)
+                        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        
+                        if image is None:
+                            print(f"⚠️ Could not decode image for encoding ID {encoding_record.id}")
+                            continue
+                        
+                        # Convert BGR to RGB
+                        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        
+                        # Get new DeepFace encoding
+                        face_locations = face_recognition.face_locations(rgb_image)
+                        
+                        if not face_locations:
+                            print(f"⚠️ No faces found in image for encoding ID {encoding_record.id}")
+                            continue
+                        
+                        face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
+                        
+                        if not face_encodings:
+                            print(f"⚠️ Could not generate encoding for encoding ID {encoding_record.id}")
+                            continue
+                        
+                        # Use the first face encoding
+                        new_encoding = face_encodings[0]
+                        new_encoding_json = json.dumps(new_encoding.tolist())
+                        
+                        # Update the database with new encoding
+                        encoding_record.encoding_data = new_encoding_json
+                        updated_count += 1
+                        
+                        print(f"✅ Updated encoding for person_id {encoding_record.person_id} (ID: {encoding_record.id})")
+                        
+                    except Exception as e:
+                        print(f"❌ Error processing encoding ID {encoding_record.id}: {e}")
                         continue
-                    
-                    # Convert BGR to RGB
-                    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    
-                    # Get new DeepFace encoding
-                    face_locations = face_recognition.face_locations(rgb_image)
-                    
-                    if not face_locations:
-                        print(f"⚠️ No faces found in image for encoding ID {encoding_id}")
-                        continue
-                    
-                    face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
-                    
-                    if not face_encodings:
-                        print(f"⚠️ Could not generate encoding for encoding ID {encoding_id}")
-                        continue
-                    
-                    # Use the first face encoding
-                    new_encoding = face_encodings[0]
-                    new_encoding_json = json.dumps(new_encoding.tolist())
-                    
-                    # Update the database with new encoding
-                    update_query = """
-                        UPDATE face_encodings 
-                        SET encoding_data = %s 
-                        WHERE id = %s
-                    """
-                    
-                    self.db.execute_query(update_query, (new_encoding_json, encoding_id))
-                    updated_count += 1
-                    
-                    print(f"✅ Updated encoding for person_id {person_id} (ID: {encoding_id})")
-                    
-                except Exception as e:
-                    print(f"❌ Error processing encoding ID {encoding_id}: {e}")
-                    continue
-            
-            print(f"🎉 Migration completed! Updated {updated_count} encodings")
-            return True
-            
+                
+                # Commit all changes
+                session.commit()
+                print(f"🎉 Migration completed! Updated {updated_count} encodings")
+                return True
+                
+            finally:
+                session.close()
+                
         except Exception as e:
             print(f"❌ Migration failed: {e}")
             return False
@@ -99,27 +104,34 @@ class FaceRecognitionMigrator:
         try:
             print("🔍 Verifying migration...")
             
-            # Test loading encodings with new format
-            query = """
-                SELECT person_id, encoding_data 
-                FROM face_encodings 
-                LIMIT 5
-            """
+            if not self.db.is_connected():
+                print("❌ Database connection not available")
+                return False
             
-            results = self.db.execute_query(query)
+            session = self.db.get_session()
+            if not session:
+                print("❌ Could not create database session")
+                return False
             
-            for person_id, encoding_data in results:
-                try:
-                    # Try to load the encoding
-                    encoding = np.array(json.loads(encoding_data))
-                    print(f"✅ Person {person_id}: Encoding shape {encoding.shape}")
-                except Exception as e:
-                    print(f"❌ Person {person_id}: Invalid encoding - {e}")
-                    return False
-            
-            print("✅ Migration verification successful!")
-            return True
-            
+            try:
+                # Test loading encodings with new format
+                encodings = session.query(FaceEncoding).limit(5).all()
+                
+                for encoding_record in encodings:
+                    try:
+                        # Try to load the encoding
+                        encoding = np.array(json.loads(encoding_record.encoding_data))
+                        print(f"✅ Person {encoding_record.person_id}: Encoding shape {encoding.shape}")
+                    except Exception as e:
+                        print(f"❌ Person {encoding_record.person_id}: Invalid encoding - {e}")
+                        return False
+                
+                print("✅ Migration verification successful!")
+                return True
+                
+            finally:
+                session.close()
+                
         except Exception as e:
             print(f"❌ Verification failed: {e}")
             return False
