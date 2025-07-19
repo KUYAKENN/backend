@@ -13,8 +13,8 @@ from PIL import Image
 import json
 import logging
 
-# Configure logging
-logging.getLogger('tensorflow').setLevel(logging.ERROR)
+# Configure logging to reduce noise
+logging.getLogger('mediapipe').setLevel(logging.WARNING)
 
 class MediaPipeFaceRecognizer:
     """MediaPipe-based face recognition system"""
@@ -124,7 +124,7 @@ class MediaPipeFaceRecognizer:
                             encodings.append(encoding)
                         else:
                             # Add zero encoding as placeholder
-                            encodings.append(np.zeros(468 * 3))  # 468 landmarks × 3 coordinates
+                            encodings.append(np.zeros(204))  # 68 landmarks × 3 coordinates
             else:
                 # Get all face encodings in the image
                 results = self.face_mesh.process(bgr_image)
@@ -145,20 +145,39 @@ class MediaPipeFaceRecognizer:
         try:
             h, w = image_shape[:2]
             
-            # Extract landmark coordinates
-            coords = []
-            for landmark in landmarks.landmark:
-                # Normalize coordinates
-                x = landmark.x
-                y = landmark.y
-                z = landmark.z if hasattr(landmark, 'z') else 0.0
-                coords.extend([x, y, z])
+            # Extract key landmark coordinates and create encoding
+            key_landmarks = [
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,  # Face outline
+                17, 18, 19, 20, 21,  # Right eyebrow
+                22, 23, 24, 25, 26,  # Left eyebrow
+                27, 28, 29, 30, 31, 32, 33, 34, 35,  # Nose
+                36, 37, 38, 39, 40, 41,  # Right eye
+                42, 43, 44, 45, 46, 47,  # Left eye
+                48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67  # Mouth
+            ]
             
-            return np.array(coords, dtype=np.float32)
+            # Extract coordinates for key landmarks
+            coords = []
+            landmark_list = list(landmarks.landmark)
+            
+            # Use a subset of landmarks for encoding (first 68 for compatibility)
+            for i in range(min(68, len(landmark_list))):
+                landmark = landmark_list[i]
+                # Normalize coordinates relative to image size
+                x = landmark.x * w
+                y = landmark.y * h
+                z = landmark.z if hasattr(landmark, 'z') else 0.0
+                coords.extend([x/w, y/h, z])  # Normalize to 0-1 range
+            
+            # Pad to fixed size if necessary
+            while len(coords) < 204:  # 68 landmarks × 3 coordinates
+                coords.append(0.0)
+            
+            return np.array(coords[:204], dtype=np.float32)
             
         except Exception as e:
             print(f"Error converting landmarks to encoding: {e}")
-            return np.zeros(468 * 3)
+            return np.zeros(204)
     
     def _cosine_similarity(self, a, b):
         """Calculate cosine similarity between two vectors using NumPy"""
